@@ -6,81 +6,22 @@
     <meta name="description" content="Professional mortar ballistics calculator for fire mission planning. Supports grid, polar, and shift missions with automatic ring selection and NFA validation." />
     <meta name="keywords" content="mortar, ballistics, calculator, fire mission, military, artillery, coordinates, arma, Arma, reforger, arma reforger" />
     <title>Mortar Ballistics Calculator - Professional Fire Mission Planning Tool For Arma Reforger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="style.css" />
-    <script>
-        // Show or hide sheaf parameters based on sheaf type selection
-        function onSheafTypeChange(sheafTypeSelectId) {
-            const sheafTypeSelect = document.getElementById(sheafTypeSelectId);
-            const selected = sheafTypeSelect.value;
-            
-                    // Show/hide linear sheaf parameters for grid mission
-        if (sheafTypeSelectId === 'sheaf-type-grid') {
-            const linearParams = document.getElementById('linear-sheaf-params');
-            const circularParams = document.getElementById('circular-sheaf-params');
-            if (selected === 'linear') {
-                linearParams.style.display = 'block';
-                circularParams.style.display = 'none';
-            } else if (selected === 'circular') {
-                linearParams.style.display = 'none';
-                circularParams.style.display = 'block';
-            } else if (selected === 'converged' || selected === 'open') {
-                linearParams.style.display = 'none';
-                circularParams.style.display = 'none';
-            } else {
-                linearParams.style.display = 'none';
-                circularParams.style.display = 'none';
-            }
-        }
-            
-            // Show/hide linear sheaf parameters for polar mission
-            if (sheafTypeSelectId === 'sheaf-type-polar') {
-                const linearParams = document.getElementById('linear-sheaf-params-polar');
-                const circularParams = document.getElementById('circular-sheaf-params-polar');
-                if (selected === 'linear') {
-                    linearParams.style.display = 'block';
-                    circularParams.style.display = 'none';
-                } else if (selected === 'circular') {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'block';
-                } else if (selected === 'converged' || selected === 'open') {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'none';
-                } else {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'none';
-                }
-            }
-            
-            // Show/hide linear sheaf parameters for shift mission
-            if (sheafTypeSelectId === 'sheaf-type-shift') {
-                const linearParams = document.getElementById('linear-sheaf-params-shift');
-                const circularParams = document.getElementById('circular-sheaf-params-shift');
-                if (selected === 'linear') {
-                    linearParams.style.display = 'block';
-                    circularParams.style.display = 'none';
-                } else if (selected === 'circular') {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'block';
-                } else if (selected === 'converged' || selected === 'open') {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'none';
-                } else {
-                    linearParams.style.display = 'none';
-                    circularParams.style.display = 'none';
-                }
-            }
-        }
-
-
-
-
-    </script>
 </head>
 <body>
-            <!-- Floating Home Button -->
-        <button class="floating-home-btn" onclick="showPage('home-page')">HOME</button>
-            <!-- Floating Back Button -->
-        <button class="floating-back-btn" onclick="goBack()">BACK</button>
+    <!-- Floating Home Button -->
+    <button class="floating-home-btn" onclick="showPage('home-page')" aria-label="Home">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+    </button>
+    <!-- Floating Back Button -->
+    <button class="floating-back-btn" onclick="goBack()" aria-label="Back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        Back
+    </button>
 
     <div id="home-page" class="page active">
         <div class="header-content">
@@ -88,29 +29,59 @@
             <p class="subtitle">Professional Fire Mission Planning Tool For Arma Reforger</p>
             <p class="author">by C-gamer_DX</p>
         </div>
-        <div id="save-indicator" style="display: none; position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
-            Data saved automatically
+        <div id="save-indicator" style="display: none;">Data saved automatically</div>
+
+        <div class="home-settings-bar">
+            <button id="realistic-toggle" class="settings-toggle-btn" onclick="toggleRealisticMode()" aria-pressed="false">
+                Realistic Mode: OFF
+            </button>
+            <span class="settings-toggle-hint">Switches firing tables to the realism mod's values (when provided).</span>
         </div>
+
+        <div class="home-stats">
+            <div class="home-stat">
+                <span class="home-stat-value" id="stat-known-points">0</span>
+                <span class="home-stat-label">Known Points</span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-value" id="stat-logged-missions">0</span>
+                <span class="home-stat-label">Logged Missions</span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-value" id="stat-nfas">0</span>
+                <span class="home-stat-label">No Fire Areas</span>
+            </div>
+        </div>
+
         <div class="three-column-layout">
             <div class="column">
-                <h3>Configuration</h3>
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2"/><circle cx="12" cy="12" r="3"/></svg>
+                    Configuration
+                </h3>
                 <div class="column-buttons">
                     <button onclick="showPage('edit-global')">Edit Global Data</button>
                     <button onclick="showPage('known-points')">Known Points</button>
                 </div>
             </div>
             <div class="column">
-                <h3>Fire Missions</h3>
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                    Fire Missions
+                </h3>
                 <div class="column-buttons">
-                    <button onclick="showPage('cff')">CFF</button>
+                    <button onclick="showPage('cff')">Call For Fire (CFF)</button>
                     <button onclick="showPage('logged-missions')">Logged Fire Missions</button>
                 </div>
             </div>
             <div class="column">
-                <h3>Safety & Data</h3>
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Safety &amp; Data
+                </h3>
                 <div class="column-buttons">
-                    <button onclick="showPage('nfa')">NFA</button>
-                    <button onclick="clearAllData()" style="background: #f44336; color: white;">Clear All Data</button>
+                    <button onclick="showPage('nfa')">No Fire Areas (NFA)</button>
+                    <button class="btn-danger" onclick="clearAllData()">Clear All Data</button>
                 </div>
             </div>
         </div>
@@ -179,11 +150,24 @@
     </div>
 
     <div id="cff" class="page">
-        <h2>CFF</h2>
-        <div class="nav-buttons">
-            <button onclick="showPage('grid-mission')">GRID MISSIONS</button>
-            <button onclick="showPage('polar-mission')">POLAR PLOT MISSION</button>
-            <button onclick="showPage('shift-from-known-point')">SHIFT FROM KNOWN POINT</button>
+        <h2>Call For Fire</h2>
+        <p class="page-lede">Choose the mission type that matches the data you have from your forward observer.</p>
+        <div class="mission-type-grid">
+            <button class="mission-type-card" onclick="showPage('grid-mission')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                <span class="mission-type-title">Grid Mission</span>
+                <span class="mission-type-desc">Target X/Y coordinates known.</span>
+            </button>
+            <button class="mission-type-card" onclick="showPage('polar-mission')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+                <span class="mission-type-title">Polar Plot</span>
+                <span class="mission-type-desc">FO position + distance + direction to target.</span>
+            </button>
+            <button class="mission-type-card" onclick="showPage('shift-from-known-point')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/><circle cx="5" cy="12" r="2"/></svg>
+                <span class="mission-type-title">Shift From Known Point</span>
+                <span class="mission-type-desc">Offset from a pre-registered target.</span>
+            </button>
         </div>
     </div>
 
@@ -227,7 +211,7 @@
                         <div id="shell-config-grid">
                             <div class="input-row">
                                 <label>Section 1 Shell Type:</label>
-                                <select id="section-1-shell-grid" onchange="updateSectionRingsOptionsGrid(1)">
+                                <select id="section-1-shell-grid" onchange="updateSectionRingsOptions(1, 'grid')">
                                     <option value="HE">HE</option>
                                     <option value="SMOKE">SMOKE</option>
                                     <option value="ILUM">ILUM</option>
@@ -392,17 +376,18 @@
             </div>
         </div>
 
+        <!-- Populated only when 2+ sections are selected; otherwise stays hidden
+             and the single Base/Corrected boxes above are used instead. -->
+        <div class="section-solutions" id="section-solutions-grid" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-grid" style="display:none;">
             <h3>Fire Solution per Section per Gun</h3>
             <div id="gun-solutions-content-grid"></div>
         </div>
         
         <!-- Reset Button for Grid Mission -->
-        <div style="text-align: center; margin-top: 30px; padding: 20px;">
-            <button onclick="resetGridMission()" style="background: #ff9800; color: white; padding: 12px 24px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
-                Reset All Fields
-            </button>
-            
+        <div class="page-actions">
+            <button class="btn-warn" onclick="resetGridMission()">Reset All Fields</button>
         </div>
     </div>
 
@@ -446,7 +431,7 @@
                         <div id="shell-config-polar">
                             <div class="input-row">
                                 <label>Section 1 Shell Type:</label>
-                                <select id="section-1-shell-polar" onchange="updateSectionRingsOptionsPolar(1)">
+                                <select id="section-1-shell-polar" onchange="updateSectionRingsOptions(1, 'polar')">
                                     <option value="HE">HE</option>
                                     <option value="SMOKE">SMOKE</option>
                                     <option value="ILUM">ILUM</option>
@@ -611,16 +596,16 @@
             </div>
         </div>
 
+        <div class="section-solutions" id="section-solutions-polar" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-polar" style="display:none;">
             <h3>Fire Solution per Gun</h3>
             <div id="gun-solutions-content-polar"></div>
         </div>
         
         <!-- Reset Button for Polar Mission -->
-        <div style="text-align: center; margin-top: 30px; padding: 20px;">
-            <button onclick="resetPolarMission()" style="background: #ff9800; color: white; padding: 12px 24px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
-                Reset All Fields
-            </button>
+        <div class="page-actions">
+            <button class="btn-warn" onclick="resetPolarMission()">Reset All Fields</button>
         </div>
     </div>
 
@@ -664,7 +649,7 @@
                         <div id="shell-config-shift">
                             <div class="input-row">
                                 <label>Section 1 Shell Type:</label>
-                                <select id="section-1-shell-shift" onchange="updateSectionRingsOptionsShift(1)">
+                                <select id="section-1-shell-shift" onchange="updateSectionRingsOptions(1, 'shift')">
                                     <option value="HE">HE</option>
                                     <option value="SMOKE">SMOKE</option>
                                     <option value="ILUM">ILUM</option>
@@ -835,16 +820,16 @@
             </div>
         </div>
 
+        <div class="section-solutions" id="section-solutions-shift" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-shift" style="display:none;">
             <h3>Fire Solution per Gun</h3>
             <div id="gun-solutions-content-shift"></div>
         </div>
         
         <!-- Reset Button for Shift Mission -->
-        <div style="text-align: center; margin-top: 30px; padding: 20px;">
-            <button onclick="resetShiftMission()" style="background: #ff9800; color: white; padding: 12px 24px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
-                Reset All Fields
-            </button>
+        <div class="page-actions">
+            <button class="btn-warn" onclick="resetShiftMission()">Reset All Fields</button>
         </div>
     </div>
 
@@ -885,23 +870,19 @@
     <div id="nfa-warning-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close" onclick="closeNFAWarningModal()">&times;</span>
-            <h2 style="color: #f44336;">⚠️ NFA Violation Warning</h2>
+            <h2>NFA Violation Warning</h2>
             <div id="nfa-warning-content">
-                <p><strong>Warning!</strong> You are violating a No Fire Area (NFA).</p>
+                <p class="nfa-warning-lede"><strong>Warning!</strong> You are violating a No Fire Area (NFA).</p>
                 <div class="nfa-warning-details">
                     <div><strong>NFA Name:</strong> <span id="nfa-warning-name">-</span></div>
                     <div><strong>NFA Coordinates:</strong> <span id="nfa-warning-coords">-</span></div>
                     <div><strong>Issued By:</strong> <span id="nfa-warning-issued-by">-</span></div>
                 </div>
-                <p style="margin-top: 20px; font-weight: bold;">Do you want to proceed with this fire mission?</p>
+                <p class="nfa-warning-prompt">Do you want to proceed with this fire mission?</p>
             </div>
             <div class="modal-buttons">
-                <button onclick="proceedWithNFAViolation()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-right: 10px;">
-                    Proceed Anyway
-                </button>
-                <button onclick="closeNFAWarningModal()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                    Cancel
-                </button>
+                <button class="btn-danger" onclick="proceedWithNFAViolation()">Proceed Anyway</button>
+                <button onclick="closeNFAWarningModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -934,12 +915,8 @@
                 </div>
             </div>
             <div class="modal-buttons">
-                <button onclick="saveNewNFA()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-right: 10px;">
-                    Save NFA
-                </button>
-                <button onclick="closeAddNFAModal()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                    Cancel
-                </button>
+                <button class="btn-primary" onclick="saveNewNFA()">Save NFA</button>
+                <button onclick="closeAddNFAModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -949,11 +926,9 @@
         <div class="modal-content">
             <span class="close" onclick="closeAlertModal()">&times;</span>
             <h2 id="alert-title">Alert</h2>
-            <div id="alert-message" style="margin: 20px 0; text-align: left; white-space: pre-wrap;"></div>
+            <div id="alert-message" class="alert-message"></div>
             <div class="modal-buttons">
-                <button onclick="closeAlertModal()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                    OK
-                </button>
+                <button class="btn-primary" onclick="closeAlertModal()">OK</button>
             </div>
         </div>
     </div>
@@ -963,14 +938,10 @@
         <div class="modal-content">
             <span class="close" onclick="closeConfirmModal()">&times;</span>
             <h2 id="confirm-title">Confirm Action</h2>
-            <div id="confirm-message" style="margin: 20px 0; text-align: left;"></div>
+            <div id="confirm-message" class="confirm-message"></div>
             <div class="modal-buttons">
-                <button onclick="confirmAction()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-right: 10px;">
-                    Confirm
-                </button>
-                <button onclick="closeConfirmModal()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                    Cancel
-                </button>
+                <button class="btn-danger" onclick="confirmAction()">Confirm</button>
+                <button onclick="closeConfirmModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -999,12 +970,8 @@
                 </div>
             </div>
             <div class="modal-buttons">
-                <button onclick="saveKnownPoint()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-right: 10px;">
-                    Save Point
-                </button>
-                <button onclick="closeKnownPointModal()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                    Cancel
-                </button>
+                <button class="btn-primary" onclick="saveKnownPoint()">Save Point</button>
+                <button onclick="closeKnownPointModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1014,13 +981,8 @@
         <div id="logged-missions-list">
             <!-- Logged missions will be displayed here -->
         </div>
-        <div style="text-align: center; margin-top: 20px; padding: 10px;">
-            <button onclick="deleteAllMissions()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                Delete All Missions
-            </button>
-        </div>
-        <div class="nav-buttons">
-            <button onclick="showPage('home-page')">Back to Home</button>
+        <div class="page-actions">
+            <button class="btn-danger" onclick="deleteAllMissions()">Delete All Missions</button>
         </div>
     </div>
 
@@ -1029,16 +991,9 @@
         <div id="known-points-list">
             <!-- Known points will be displayed here -->
         </div>
-        <div style="text-align: center; margin-top: 20px; padding: 10px;">
-            <button onclick="addNewKnownPoint()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                Add New Known Point
-            </button>
-            <button onclick="deleteAllKnownPoints()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-left: 10px;">
-                Delete All Known Points
-            </button>
-        </div>
-        <div class="nav-buttons">
-            <button onclick="showPage('home-page')">Back to Home</button>
+        <div class="page-actions">
+            <button class="btn-primary" onclick="addNewKnownPoint()">Add New Known Point</button>
+            <button class="btn-danger" onclick="deleteAllKnownPoints()">Delete All Known Points</button>
         </div>
     </div>
 
@@ -1047,20 +1002,57 @@
         <div id="nfa-list">
             <!-- NFAs will be displayed here -->
         </div>
-        <div style="text-align: center; margin-top: 20px; padding: 10px;">
-            <button onclick="addNewNFA()" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer;">
-                Add New NFA
-            </button>
-            <button onclick="deleteAllNFAs()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-left: 10px;">
-                Delete All NFAs
-            </button>
-        </div>
-        <div class="nav-buttons">
-            <button onclick="showPage('home-page')">Back to Home</button>
+        <div class="page-actions">
+            <button class="btn-primary" onclick="addNewNFA()">Add New NFA</button>
+            <button class="btn-danger" onclick="deleteAllNFAs()">Delete All NFAs</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Module load order is dependency-driven: each file may reference any
+         function/global defined in an earlier file. -->
+    <script src="js/platforms.js"></script>   <!-- PLATFORMS data + Settings -->
+    <script src="js/ballistics.js"></script>  <!-- Pure math (uses Settings) -->
+    <script src="js/sections.js"></script>    <!-- Sections, mortar coords, ring auto-select -->
+    <script src="js/storage.js"></script>     <!-- localStorage persistence -->
+    <script src="js/records.js"></script>     <!-- Known points, NFAs, logged missions -->
+    <script src="js/missions.js"></script>    <!-- Mission orchestrator + MTO/NFA modals -->
+    <script src="js/ui.js"></script>          <!-- Page nav, modals, validation, bootstrap -->
+
+    <script>
+        // Read-only home stats — pure UI, never touches calculation math.
+        (function () {
+            const $kp = document.getElementById('stat-known-points');
+            const $lm = document.getElementById('stat-logged-missions');
+            const $nfa = document.getElementById('stat-nfas');
+            const home = document.getElementById('home-page');
+            if (!home || !$kp || !$lm || !$nfa) return;
+
+            function safeCount(key) {
+                try {
+                    const arr = JSON.parse(localStorage.getItem(key) || '[]');
+                    return Array.isArray(arr) ? arr.length : 0;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function refresh() {
+                $kp.textContent = safeCount('knownPoints');
+                $lm.textContent = safeCount('loggedMissions');
+                $nfa.textContent = safeCount('nfas');
+            }
+
+            // Refresh whenever the home page becomes active
+            const observer = new MutationObserver(function () {
+                if (home.classList.contains('active')) refresh();
+            });
+            observer.observe(home, { attributes: true, attributeFilter: ['class'] });
+
+            // Refresh once when localStorage changes (other tabs) and on first load
+            window.addEventListener('storage', refresh);
+            refresh();
+        })();
+    </script>
 </body>
 </html>
 
