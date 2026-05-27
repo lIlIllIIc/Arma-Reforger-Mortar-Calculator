@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Reforger Fire Mission Calculator">
+    <title>Reforger Fire Mission Calculator</title>
+
+    <!-- Dark rounded background (matches the app's --surface colour). -->
+    <rect width="64" height="64" rx="14" fill="#0f1612"/>
+    <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" stroke="#1f3329" stroke-width="1"/>
+
+    <!-- Trajectory arc from launch (bottom-left) to target (centre). -->
+    <path d="M 7 57 Q 13 6, 32 32" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="2 2" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- Small mortar tube silhouette at the launch point. -->
+    <line x1="6" y1="58" x2="12" y2="50" stroke="#86efac" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="6" cy="58" r="2" fill="#86efac"/>
+
+    <!-- Reticle: outer ring + inner ring + ticks + centre dot. -->
+    <circle cx="32" cy="32" r="19" stroke="#4ade80" stroke-width="2.4"/>
+    <circle cx="32" cy="32" r="10" stroke="#22ff88" stroke-width="1.8"/>
+    <line x1="32" y1="7"  x2="32" y2="16" stroke="#22ff88" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="32" y1="48" x2="32" y2="57" stroke="#22ff88" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="7"  y1="32" x2="16" y2="32" stroke="#22ff88" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="48" y1="32" x2="57" y2="32" stroke="#22ff88" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="32" cy="32" r="2.5" fill="#22ff88"/>
+</svg>
