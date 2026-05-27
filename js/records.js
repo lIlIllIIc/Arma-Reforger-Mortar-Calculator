@@ -30,12 +30,12 @@ function displayKnownPoints() {
         <div class="logged-mission" onclick="toggleKnownPointDetails('${point.id}')">
             <div class="logged-mission-header">
                 <span class="logged-mission-target">${point.targetNumber}</span>
-                <span class="logged-mission-coordinates">(${point.x}, ${point.y})</span>
+                <span class="logged-mission-coordinates">(${formatCoordPair(point.x, point.y)})</span>
             </div>
             <div class="logged-mission-summary" id="known-point-summary-${point.id}" style="display: none;">
                 <div class="logged-mission-detail">
                     <span class="logged-mission-detail-label">Coordinates:</span>
-                    <span class="logged-mission-detail-value">X: ${point.x}, Y: ${point.y}</span>
+                    <span class="logged-mission-detail-value">X: ${formatCoord(point.x)}, Y: ${formatCoord(point.y)}</span>
                 </div>
                 <div class="logged-mission-detail">
                     <span class="logged-mission-detail-label">Altitude:</span>
@@ -46,12 +46,40 @@ function displayKnownPoints() {
                     <span class="logged-mission-detail-value">${new Date(point.timestamp).toLocaleString()}</span>
                 </div>
                 <div style="margin-top: 10px;">
+                    <button onclick="fireAtKnownPoint('${point.id}')" style="background: #4ade80; color: #0a0f0c; padding: 5px 10px; border: none; border-radius: 3px; margin-right: 5px; cursor: pointer; font-weight: 600;">Fire</button>
                     <button onclick="editKnownPoint('${point.id}')" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 3px; margin-right: 5px; cursor: pointer;">Edit</button>
                     <button onclick="deleteKnownPoint('${point.id}')" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer;">Delete</button>
                 </div>
             </div>
         </div>
     `).join('');
+}
+
+/**
+ * Pre-fill the Grid Mission page with this known point's coordinates and
+ * navigate to it. The user can immediately press Calculate, or tweak fields
+ * first. Target altitude defaults to the known point's altitude.
+ */
+function fireAtKnownPoint(pointId) {
+    if (typeof event !== 'undefined' && event) event.stopPropagation();
+    const knownPoints = JSON.parse(localStorage.getItem('knownPoints') || '[]');
+    const point = knownPoints.find(p => p.id === pointId);
+    if (!point) return;
+
+    const setIfPresent = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    };
+
+    setIfPresent('target-x', point.x);
+    setIfPresent('target-y', point.y);
+    setIfPresent('target-alt', point.altitude || 0);
+    setIfPresent('target-number-grid', point.targetNumber || '');
+
+    showPage('grid-mission');
 }
 
 function toggleKnownPointDetails(pointId) {
@@ -105,7 +133,7 @@ function updateKnownPointDropdown() {
     knownPoints.forEach(point => {
         const opt = document.createElement('option');
         opt.value = point.id;
-        opt.textContent = `${point.targetNumber} (${point.x}, ${point.y})`;
+        opt.textContent = `${point.targetNumber} (${formatCoordPair(point.x, point.y)})`;
         dropdown.appendChild(opt);
     });
 }
@@ -190,12 +218,12 @@ function displayNFAs() {
         <div class="logged-mission" onclick="toggleNFADetails('${nfa.id}')">
             <div class="logged-mission-header">
                 <span class="logged-mission-target">${nfa.name}</span>
-                <span class="logged-mission-coordinates">(${nfa.x}, ${nfa.y}) - ${nfa.diameter}m</span>
+                <span class="logged-mission-coordinates">(${formatCoordPair(nfa.x, nfa.y)}) - ${nfa.diameter}m</span>
             </div>
             <div class="logged-mission-summary" id="nfa-summary-${nfa.id}" style="display: none;">
                 <div class="logged-mission-detail">
                     <span class="logged-mission-detail-label">Location:</span>
-                    <span class="logged-mission-detail-value">X: ${nfa.x}, Y: ${nfa.y}</span>
+                    <span class="logged-mission-detail-value">X: ${formatCoord(nfa.x)}, Y: ${formatCoord(nfa.y)}</span>
                 </div>
                 <div class="logged-mission-detail">
                     <span class="logged-mission-detail-label">Diameter:</span>
@@ -253,7 +281,7 @@ function saveNewNFA() {
     if (!y || isNaN(y)) errors.push('Valid Y coordinate is required');
     if (!diameter || isNaN(diameter) || diameter <= 0) errors.push('Valid diameter is required');
     if (errors.length) {
-        alert('Please fix the following errors:\n\n' + errors.join('\n'));
+        showAlertModal('Validation Error', 'Please fix the following errors:\n\n' + errors.join('\n'));
         return;
     }
 
@@ -285,7 +313,7 @@ function saveNewNFA() {
     localStorage.setItem('nfas', JSON.stringify(nfas));
     closeAddNFAModal();
     displayNFAs();
-    alert(`NFA ${editingId ? 'updated' : 'added'} successfully!`);
+    showAlertModal('Success', `NFA ${editingId ? 'updated' : 'added'} successfully!`);
 }
 
 function editNFA(nfaId) {
@@ -465,7 +493,7 @@ function createMissionSolutionsHTML(mission) {
                             const el = parseFloat(gun.elevation) || 0;
                             const tof = parseFloat(gun.tof) || 0;
                             const targetInfo = (gun.targetX !== undefined && gun.targetY !== undefined)
-                                ? `<div><strong>Target:</strong> (${gun.targetX.toFixed(1)}, ${gun.targetY.toFixed(1)})</div>`
+                                ? `<div><strong>Target:</strong> (${formatCoordPair(gun.targetX, gun.targetY)})</div>`
                                 : '';
                             return `
                                 <div class="logged-mission-gun-solution">
@@ -494,7 +522,7 @@ function createMissionSolutionsHTML(mission) {
                 const el = parseFloat(sol.elevation) || 0;
                 const tof = parseFloat(sol.tof) || 0;
                 const targetInfo = (sol.targetX !== undefined && sol.targetY !== undefined)
-                    ? `<div><strong>Target:</strong> (${sol.targetX.toFixed(1)}, ${sol.targetY.toFixed(1)})</div>`
+                    ? `<div><strong>Target:</strong> (${formatCoordPair(sol.targetX, sol.targetY)})</div>`
                     : '';
                 return `
                     <div class="logged-mission-gun-solution">
@@ -565,8 +593,24 @@ function deleteAllMissions() {
  */
 function logFireMission(missionType) {
     const missionData = getMissionData(missionType);
-    if (!missionData || !missionData.targetNumber) {
+    if (!missionData) {
         showAlertModal('No Fire Solution', 'Please calculate a fire solution first before logging the mission.');
+        return;
+    }
+
+    // Target number + amount of rounds are only required at log time so the
+    // user can iterate on calculations without filling in the paperwork.
+    // Inline-flag any that are missing.
+    const inputs = MISSION_INPUTS[missionType];
+    const targetNumber = (missionData.targetNumber || '').trim();
+    const rounds = parseInt(missionData.amountRounds, 10);
+    const missing = {};
+    if (!targetNumber) missing[inputs.targetNumber] = 'Required to log';
+    if (isNaN(rounds) || rounds <= 0) missing[inputs.amountRounds] = 'Required to log';
+    if (Object.keys(missing).length) {
+        clearAllFieldErrors();
+        Object.entries(missing).forEach(([id, msg]) => setFieldError(id, msg));
+        showAlertModal('Cannot Log Mission', 'Please fill in the highlighted mission details before logging.');
         return;
     }
 
@@ -603,4 +647,129 @@ function logFireMission(missionType) {
     displayLoggedMissions();
     closeMTOModal();
     resetMissionFields(missionType);
+}
+
+// ============================================================================
+// Mission templates (battery setup presets)
+// ============================================================================
+//
+// A template captures the "battery configuration" subset of localStorage —
+// section/gun counts, per-gun coordinates, per-section altitudes, the active
+// platform per mission, and the per-section shell + ring selections.
+// Mission-instance inputs (target coords, FO data, sheaf params, etc.) are
+// NOT included; those are per-fire-mission and shouldn't be replayed.
+
+const TEMPLATE_KEY_PATTERNS = [
+    /^numSections$/,
+    /^numGuns$/,
+    /^section-\d+-guns$/,
+    /^section-\d+-alt$/,
+    /^section-\d+-gun-\d+-[xy]$/,
+    /^platform(-polar|-shift)?$/,
+    /^section-\d+-(shell|rings)-(grid|polar|shift)$/
+];
+
+function captureCurrentTemplate() {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (TEMPLATE_KEY_PATTERNS.some(rx => rx.test(key))) {
+            data[key] = localStorage.getItem(key);
+        }
+    }
+    return data;
+}
+
+function displayTemplates() {
+    const container = document.getElementById('templates-list');
+    if (!container) return;
+
+    const templates = JSON.parse(localStorage.getItem('missionTemplates') || '[]');
+    if (templates.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">No templates saved yet. Set up your battery the way you want it, then click "Save Current Setup as Template".</p>';
+        return;
+    }
+
+    templates.sort((a, b) => a.name.localeCompare(b.name));
+
+    container.innerHTML = templates.map(t => `
+        <div class="logged-mission">
+            <div class="logged-mission-header">
+                <span class="logged-mission-target">${t.name}</span>
+                <span class="logged-mission-coordinates">${new Date(t.createdAt).toLocaleString()}</span>
+            </div>
+            <div style="padding: 10px;">
+                <button onclick="loadTemplate('${t.id}')" style="background: #4ade80; color: #0a0f0c; padding: 6px 14px; border: none; border-radius: 4px; margin-right: 6px; cursor: pointer; font-weight: 600;">Load</button>
+                <button onclick="renameTemplate('${t.id}')" style="background: #2196F3; color: white; padding: 6px 14px; border: none; border-radius: 4px; margin-right: 6px; cursor: pointer;">Rename</button>
+                <button onclick="deleteTemplate('${t.id}')" style="background: #f44336; color: white; padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer;">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function saveCurrentAsTemplate() {
+    showPromptModal('Save Template', 'Name for this battery setup:', '', (name) => {
+        if (!name) return;
+        const templates = JSON.parse(localStorage.getItem('missionTemplates') || '[]');
+        templates.push({
+            id: Date.now().toString(),
+            name: name,
+            createdAt: new Date().toISOString(),
+            data: captureCurrentTemplate()
+        });
+        localStorage.setItem('missionTemplates', JSON.stringify(templates));
+        displayTemplates();
+        showAlertModal('Saved', `Template "${name}" saved.`);
+    });
+}
+
+function loadTemplate(templateId) {
+    const templates = JSON.parse(localStorage.getItem('missionTemplates') || '[]');
+    const tpl = templates.find(t => t.id === templateId);
+    if (!tpl) return;
+
+    showConfirmModal(
+        'Load Template?',
+        `Loading "${tpl.name}" will replace your current battery setup (sections, gun positions, altitudes, platforms, shell/ring selections). Mission inputs like target coords are unaffected. Continue?`,
+        () => {
+            // Strip every template-scope key, then apply the saved values.
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (TEMPLATE_KEY_PATTERNS.some(rx => rx.test(key))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            Object.entries(tpl.data).forEach(([k, v]) => localStorage.setItem(k, v));
+            location.reload();
+        }
+    );
+}
+
+function renameTemplate(templateId) {
+    const templates = JSON.parse(localStorage.getItem('missionTemplates') || '[]');
+    const tpl = templates.find(t => t.id === templateId);
+    if (!tpl) return;
+    showPromptModal('Rename Template', 'New name:', tpl.name, (newName) => {
+        if (!newName || newName === tpl.name) return;
+        tpl.name = newName;
+        localStorage.setItem('missionTemplates', JSON.stringify(templates));
+        displayTemplates();
+    });
+}
+
+function deleteTemplate(templateId) {
+    const templates = JSON.parse(localStorage.getItem('missionTemplates') || '[]');
+    const tpl = templates.find(t => t.id === templateId);
+    if (!tpl) return;
+    showConfirmModal(
+        'Delete Template?',
+        `Delete "${tpl.name}"? This cannot be undone.`,
+        () => {
+            const filtered = templates.filter(t => t.id !== templateId);
+            localStorage.setItem('missionTemplates', JSON.stringify(filtered));
+            displayTemplates();
+        }
+    );
 }

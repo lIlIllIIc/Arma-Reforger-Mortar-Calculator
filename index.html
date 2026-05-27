@@ -33,9 +33,9 @@
 
         <div class="home-settings-bar">
             <button id="realistic-toggle" class="settings-toggle-btn" onclick="toggleRealisticMode()" aria-pressed="false">
-                Realistic Mode: OFF
+                Mod: Adult Mortars (OFF)
             </button>
-            <span class="settings-toggle-hint">Switches firing tables to the realism mod's values (when provided).</span>
+            <span class="settings-toggle-hint">Switches firing tables to the Adult Mortars mod values (when provided).</span>
         </div>
 
         <div class="home-stats">
@@ -62,6 +62,8 @@
                 <div class="column-buttons">
                     <button onclick="showPage('edit-global')">Edit Global Data</button>
                     <button onclick="showPage('known-points')">Known Points</button>
+                    <button onclick="showPage('templates')">Mission Templates</button>
+                    <button onclick="showPage('settings')">Settings</button>
                 </div>
             </div>
             <div class="column">
@@ -81,6 +83,8 @@
                 </h3>
                 <div class="column-buttons">
                     <button onclick="showPage('nfa')">No Fire Areas (NFA)</button>
+                    <button onclick="exportAllData()">Export Data (JSON)</button>
+                    <button onclick="triggerImportDataPicker()">Import Data (JSON)</button>
                     <button class="btn-danger" onclick="clearAllData()">Clear All Data</button>
                 </div>
             </div>
@@ -182,8 +186,10 @@
                     <div class="input-group">
                         <div class="input-row">
                             <label>Firing Platform:</label>
-                            <select id="platform">
+                            <select id="platform" onchange="updateMissionShellConfiguration('grid')">
                                 <option value="M252">M252</option>
+                                <option value="2B14">2B14</option>
+                                <option value="M777">M777</option>
                                 <option value="M119">M119</option>
                             </select>
                         </div>
@@ -316,15 +322,31 @@
                 </div>
 
                 <div class="section">
-                    <div class="section-header">Corrections</div>
+                    <div class="section-header">Fire Corrections / Adjust Fire</div>
                     <div class="input-group">
                         <div class="input-row">
-                            <label>ADD/DROP (m):</label>
-                            <input type="number" id="add-drop" />
+                            <label>Crest clearance (m, optional):</label>
+                            <input type="number" id="crest-grid" placeholder="Max terrain altitude on path" oninput="triggerRingUpdatesForCalculation('grid')" />
                         </div>
-                        <div class="input-row">
-                            <label>LEFT/RIGHT (m):</label>
-                            <input type="number" id="left-right" />
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">ADD/DROP:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop', -10)">−10</button>
+                            <input type="number" id="add-drop" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop', 100)">+100</button>
+                        </div>
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">LEFT/RIGHT:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right', -10)">−10</button>
+                            <input type="number" id="left-right" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right', 100)">+100</button>
                         </div>
                     </div>
                 </div>
@@ -380,6 +402,8 @@
              and the single Base/Corrected boxes above are used instead. -->
         <div class="section-solutions" id="section-solutions-grid" style="display:none;"></div>
 
+        <div class="mini-map-container" id="mini-map-grid" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-grid" style="display:none;">
             <h3>Fire Solution per Section per Gun</h3>
             <div id="gun-solutions-content-grid"></div>
@@ -402,8 +426,10 @@
                     <div class="input-group">
                         <div class="input-row">
                             <label>Firing Platform:</label>
-                            <select id="platform-polar">
+                            <select id="platform-polar" onchange="updateMissionShellConfiguration('polar')">
                                 <option value="M252">M252</option>
+                                <option value="2B14">2B14</option>
+                                <option value="M777">M777</option>
                                 <option value="M119">M119</option>
                             </select>
                         </div>
@@ -536,15 +562,31 @@
                 </div>
 
                 <div class="section">
-                    <div class="section-header">Corrections</div>
+                    <div class="section-header">Fire Corrections / Adjust Fire</div>
                     <div class="input-group">
                         <div class="input-row">
-                            <label>ADD/DROP (m):</label>
-                            <input type="number" id="add-drop-polar" />
+                            <label>Crest clearance (m, optional):</label>
+                            <input type="number" id="crest-polar" placeholder="Max terrain altitude on path" oninput="triggerRingUpdatesForCalculation('polar')" />
                         </div>
-                        <div class="input-row">
-                            <label>LEFT/RIGHT (m):</label>
-                            <input type="number" id="left-right-polar" />
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">ADD/DROP:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-polar', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-polar', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-polar', -10)">−10</button>
+                            <input type="number" id="add-drop-polar" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-polar', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-polar', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-polar', 100)">+100</button>
+                        </div>
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">LEFT/RIGHT:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-polar', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-polar', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-polar', -10)">−10</button>
+                            <input type="number" id="left-right-polar" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-polar', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-polar', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-polar', 100)">+100</button>
                         </div>
                     </div>
                 </div>
@@ -598,6 +640,8 @@
 
         <div class="section-solutions" id="section-solutions-polar" style="display:none;"></div>
 
+        <div class="mini-map-container" id="mini-map-polar" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-polar" style="display:none;">
             <h3>Fire Solution per Gun</h3>
             <div id="gun-solutions-content-polar"></div>
@@ -620,8 +664,10 @@
                     <div class="input-group">
                         <div class="input-row">
                             <label>Firing Platform:</label>
-                            <select id="platform-shift">
+                            <select id="platform-shift" onchange="updateMissionShellConfiguration('shift')">
                                 <option value="M252">M252</option>
+                                <option value="2B14">2B14</option>
+                                <option value="M777">M777</option>
                                 <option value="M119">M119</option>
                             </select>
                         </div>
@@ -762,15 +808,31 @@
                 </div>
 
                 <div class="section">
-                    <div class="section-header">Corrections</div>
+                    <div class="section-header">Fire Corrections / Adjust Fire</div>
                     <div class="input-group">
                         <div class="input-row">
-                            <label>ADD/DROP (m):</label>
-                            <input type="number" id="add-drop-shift" />
+                            <label>Crest clearance (m, optional):</label>
+                            <input type="number" id="crest-shift" placeholder="Max terrain altitude on path" oninput="triggerRingUpdatesForCalculation('shift')" />
                         </div>
-                        <div class="input-row">
-                            <label>LEFT/RIGHT (m):</label>
-                            <input type="number" id="left-right-shift" />
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">ADD/DROP:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-shift', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-shift', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('add-drop-shift', -10)">−10</button>
+                            <input type="number" id="add-drop-shift" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-shift', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-shift', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('add-drop-shift', 100)">+100</button>
+                        </div>
+                        <div class="adjust-fire-row">
+                            <span class="adjust-label">LEFT/RIGHT:</span>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-shift', -100)">−100</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-shift', -50)">−50</button>
+                            <button type="button" class="adjust-btn neg" onclick="adjustField('left-right-shift', -10)">−10</button>
+                            <input type="number" id="left-right-shift" class="adjust-value" />
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-shift', 10)">+10</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-shift', 50)">+50</button>
+                            <button type="button" class="adjust-btn pos" onclick="adjustField('left-right-shift', 100)">+100</button>
                         </div>
                     </div>
                 </div>
@@ -822,6 +884,8 @@
 
         <div class="section-solutions" id="section-solutions-shift" style="display:none;"></div>
 
+        <div class="mini-map-container" id="mini-map-shift" style="display:none;"></div>
+
         <div class="gun-solutions" id="fire-solution-guns-shift" style="display:none;">
             <h3>Fire Solution per Gun</h3>
             <div id="gun-solutions-content-shift"></div>
@@ -861,6 +925,7 @@
                 </div>
             </div>
             <div class="modal-buttons">
+                <button class="btn-primary" onclick="printCurrentMTO()">Print</button>
                 <button onclick="closeMTOModal()">Close</button>
             </div>
         </div>
@@ -946,6 +1011,22 @@
         </div>
     </div>
 
+    <!-- Generic Prompt Modal (replaces window.prompt) -->
+    <div id="prompt-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closePromptModal()">&times;</span>
+            <h2 id="prompt-title">Enter Value</h2>
+            <div id="prompt-message" class="alert-message"></div>
+            <div class="input-group">
+                <input type="text" id="prompt-input" onkeydown="if(event.key==='Enter') submitPromptModal();" />
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="submitPromptModal()">OK</button>
+                <button onclick="closePromptModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Known Point Modal -->
     <div id="add-known-point-modal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -994,6 +1075,84 @@
         <div class="page-actions">
             <button class="btn-primary" onclick="addNewKnownPoint()">Add New Known Point</button>
             <button class="btn-danger" onclick="deleteAllKnownPoints()">Delete All Known Points</button>
+        </div>
+    </div>
+
+    <div id="settings" class="page">
+        <h2>Settings</h2>
+        <p class="page-lede">Preferences are saved automatically and survive page reloads. They're included when you export/import data.</p>
+
+        <div class="section">
+            <div class="section-header">Mod / Data</div>
+            <div class="input-group">
+                <div class="input-row">
+                    <label>
+                        <input type="checkbox" id="pref-adult-mortars" onchange="setAdultMortarsMod(this.checked)" />
+                        Use Adult Mortars mod firing data (when provided)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">Calculation</div>
+            <div class="input-group">
+                <div class="input-row">
+                    <label>
+                        <input type="checkbox" id="pref-live-recalc" onchange="setLiveRecalc(this.checked)" />
+                        Live auto-recalculate as I edit (debounced 300ms)
+                    </label>
+                </div>
+                <p class="settings-hint">Only kicks in once a fire solution is already on screen — so it won't fire validation errors while you're still filling fields.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">Defaults for New Setups</div>
+            <p class="settings-hint">Applied only when there's no saved value. To re-apply them, use <strong>Clear All Data</strong> on the home page.</p>
+            <div class="input-group">
+                <div class="input-row">
+                    <label>Default platform:</label>
+                    <select id="pref-default-platform" onchange="setDefaultPlatform(this.value)">
+                        <option value="M252">M252</option>
+                        <option value="2B14">2B14</option>
+                        <option value="M777">M777</option>
+                        <option value="M119">M119</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>Default section count:</label>
+                    <select id="pref-default-sections" onchange="setDefaultSections(this.value)">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>Default sheaf type:</label>
+                    <select id="pref-default-sheaf" onchange="setDefaultSheafType(this.value)">
+                        <option value="parallel">Parallel</option>
+                        <option value="linear">Linear</option>
+                        <option value="circular">Circular</option>
+                        <option value="converged">Converged</option>
+                        <option value="open">Open</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="templates" class="page">
+        <h2>Mission Templates</h2>
+        <p class="page-lede">Save your current battery setup (sections, gun positions, altitudes, platforms, shell/ring selections) as a reusable preset. Mission inputs like target coordinates and FO data are not part of templates.</p>
+        <div id="templates-list">
+            <!-- Templates rendered here -->
+        </div>
+        <div class="page-actions">
+            <button class="btn-primary" onclick="saveCurrentAsTemplate()">Save Current Setup as Template</button>
         </div>
     </div>
 

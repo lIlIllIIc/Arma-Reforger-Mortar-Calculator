@@ -9,6 +9,28 @@
  */
 
 // ============================================================================
+// Display helpers
+// ============================================================================
+
+/**
+ * Render a grid coordinate as a 4-digit zero-padded string. Negative values
+ * keep the leading minus sign and pad the magnitude to 4 digits.
+ *   formatCoord(40)    → "0040"
+ *   formatCoord(40.5)  → "0041"  (Math.round)
+ *   formatCoord(-7)    → "-0007"
+ */
+function formatCoord(value) {
+    const n = Math.round(Number(value) || 0);
+    if (n < 0) return '-' + String(Math.abs(n)).padStart(4, '0');
+    return String(n).padStart(4, '0');
+}
+
+/** "0040, 0050" — convenience wrapper for the common pair display. */
+function formatCoordPair(x, y) {
+    return `${formatCoord(x)}, ${formatCoord(y)}`;
+}
+
+// ============================================================================
 // Helpers
 // ============================================================================
 
@@ -34,13 +56,19 @@ function calculateRange(mortarX, mortarY, targetX, targetY) {
     ) * 10;
 }
 
-/** Azimuth from mortar to target in mils (0..6400). */
-function calculateAzimuth(mortarX, mortarY, targetX, targetY) {
+/**
+ * Azimuth from mortar to target in mils.
+ *
+ * @param milsPerCircle  6400 for NATO weapons, 6000 for Soviet/Russian.
+ *                       Defaults to NATO when omitted.
+ */
+function calculateAzimuth(mortarX, mortarY, targetX, targetY, milsPerCircle = 6400) {
     const dx = (400 - targetY) - (400 - mortarY);
     const dy = mortarX - targetX;
     const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
-    let azimuth = (angleDeg * 6400 / 360) + 3200;
-    return ((azimuth % 6400) + 6400) % 6400;
+    const halfCircle = milsPerCircle / 2;
+    const azimuth = (angleDeg * milsPerCircle / 360) + halfCircle;
+    return ((azimuth % milsPerCircle) + milsPerCircle) % milsPerCircle;
 }
 
 /** Apply ADD/DROP + LEFT/RIGHT shift in the FO's frame to a target. */
@@ -60,9 +88,11 @@ function applyShiftCorrection(targetX, targetY, addDrop, leftRight, foDirDeg) {
 
 /**
  * Smallest ring count that can reach `range` for the given shell on the
- * active platform/variant. Returns null if the range is unreachable.
+ * active platform/variant. When `crestElev` is provided, the picked ring
+ * must also produce a trajectory whose apex clears that altitude — useful
+ * to auto-bump rings over terrain. Returns null if no ring satisfies.
  */
-function getMinimumRingsForRange(range, shell, missionType = 'grid') {
+function getMinimumRingsForRange(range, shell, missionType = 'grid', crestElev = null, mortarAlt = 0) {
     const shellData = Settings.resolveShell(missionType, shell);
     if (!shellData) return null;
 
@@ -71,9 +101,29 @@ function getMinimumRingsForRange(range, shell, missionType = 'grid') {
         const table = shellData.rings[rings];
         if (!table || !table.length) continue;
         const maxRangeForRing = table[table.length - 1][0];
-        if (range <= maxRangeForRing) return rings;
+        const minRangeForRing = table[0][0];
+        if (range > maxRangeForRing || range < minRangeForRing) continue;
+
+        if (crestElev !== null && !trajectoryClearsCrest(table, range, mortarAlt, crestElev)) {
+            continue;
+        }
+        return rings;
     }
     return null;
+}
+
+/**
+ * Vacuum-trajectory apex check. Apex above firing point ≈ TOF² · g / 8.
+ * (g ≈ 9.81 m/s² → factor ≈ 1.226). Real artillery sees a slightly lower
+ * apex because of drag, so this OVER-estimates — i.e. it's optimistic about
+ * clearance. Good enough as a heads-up, not a substitute for visual recon.
+ */
+function trajectoryClearsCrest(table, range, mortarAlt, crestElev) {
+    const { lower, upper } = bracketRange(table, range);
+    const tof = interpolate(range, lower[0], lower[3], upper[0], upper[3]);
+    if (!isFinite(tof) || tof <= 0) return true;  // unknown → don't block
+    const apexAboveFiring = (tof * tof * 9.81) / 8;
+    return (mortarAlt + apexAboveFiring) >= crestElev;
 }
 
 /** Is `range` inside the shell's min/max envelope? */
@@ -109,17 +159,20 @@ function calculateSingleGunBallistics(
     const table = Settings.getShellTable(missionType, shell, rings);
     if (!table) return null;
 
+    // Active platform's mil convention — feeds the azimuth scaling so a
+    // Russian 2B14 returns 0..6000 mils while NATO weapons return 0..6400.
+    const milsPerCircle = Settings.getMilsPerCircle(missionType);
     const heightDiff = targetAlt - mortarAlt;
 
     // --- Base solution ---
-    const azimuth = calculateAzimuth(mortarX, mortarY, targetX, targetY);
+    const azimuth = calculateAzimuth(mortarX, mortarY, targetX, targetY, milsPerCircle);
     const range = calculateRange(mortarX, mortarY, targetX, targetY);
 
     const { elevation, tof } = solveFromTable(table, range, heightDiff);
 
     // --- Corrected solution ---
     const corr = applyShiftCorrection(targetX, targetY, addDrop, leftRight, foDirDeg);
-    const azimuthCorr = calculateAzimuth(mortarX, mortarY, corr.x, corr.y);
+    const azimuthCorr = calculateAzimuth(mortarX, mortarY, corr.x, corr.y, milsPerCircle);
     const rangeCorr = calculateRange(mortarX, mortarY, corr.x, corr.y);
     const solved = solveFromTable(table, rangeCorr, heightDiff);
 

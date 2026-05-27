@@ -41,6 +41,9 @@ const PLATFORMS = {
     M252: {
         id: 'M252',
         displayName: 'M252 (81mm Mortar)',
+        // NATO convention: 6400 mils per full circle (1600 mils / quadrant).
+        // Elevations in the firing tables below are NATO mils.
+        milsPerCircle: 6400,
         variants: {
             vanilla: {
                 shells: {
@@ -394,6 +397,246 @@ const PLATFORMS = {
         }
     },
 
+    // Source: "2B14 VANILLA - M777.xlsx", sheets "2B14 82MM HE 0".."HE 4".
+    // The accompanying SMOKE and ILUM sheets in that workbook are empty; add
+    // them under `shells.SMOKE` / `shells.ILUM` when real values are available.
+    '2B14': {
+        id: '2B14',
+        displayName: '2B14 (82mm Mortar)',
+        // Soviet/Russian convention: 6000 mils per full circle (1500 mils /
+        // quadrant). Elevations in the firing tables below are Russian mils
+        // and the azimuth output uses the 6000-mil scale via Settings.
+        milsPerCircle: 6000,
+        variants: {
+            vanilla: {
+                shells: {
+                    HE: {
+                        rangeLimits: { min: 50, max: 2300 },
+                        allowsRingZero: true,
+                        // Per-ring dispersion (radius of probable impact, metres)
+                        // from the spreadsheet's column F. Missing rings → unknown.
+                        dispersionByRing: { 0: 13, 1: 21, 3: 44 },
+                        rings: {
+                            0: [
+                                [50, 1455, 44, 15, null],
+                                [100, 1411, 46, 15, 0.1],
+                                [150, 1365, 47, 14.9, 0.1],
+                                [200, 1318, 50, 14.8, 0.2],
+                                [250, 1268, 51, 14.6, 0.2],
+                                [300, 1217, 58, 14.4, 0.3],
+                                [350, 1159, 64, 14.1, 0.4],
+                                [400, 1095, 72, 13.7, 0.5],
+                                [450, 1023, 101, 13.2, 0.8],
+                                [500, 922, null, 12.4, null]
+                            ],
+                            1: [
+                                [100, 1446, 27, 19.5, 0.1],
+                                [200, 1392, 28, 19.4, 0.1],
+                                [300, 1335, 29, 19.2, 0.1],
+                                [400, 1275, 31, 18.9, 0.1],
+                                [500, 1212, 35, 18.6, 0.2],
+                                [600, 1141, 40, 18.1, 0.3],
+                                [700, 1058, 48, 17.4, 0.4],
+                                [800, 952, 81, 16.4, 0.9]
+                            ],
+                            2: [
+                                [200, 1432, 17, 24.8, null],
+                                [300, 1397, 18, 24.7, null],
+                                [400, 1362, 18, 24.6, 0.1],
+                                [500, 1325, 18, 24.4, 0.1],
+                                [600, 1288, 20, 24.2, 0.1],
+                                [700, 1248, 20, 24, 0.1],
+                                [800, 1207, 22, 23.7, 0.2],
+                                [900, 1162, 23, 23.3, 0.2],
+                                [1000, 1114, 26, 22.9, 0.3],
+                                [1100, 1060, 29, 22.3, 0.3],
+                                [1200, 997, 37, 21.5, 0.4],
+                                [1300, 914, 55, 20.4, 0.8],
+                                [1400, 775, null, 17.8, null]
+                            ],
+                            3: [
+                                [300, 1423, 13, 28.9, null],
+                                [400, 1397, 14, 28.9, 0.1],
+                                [500, 1370, 13, 28.8, 0.1],
+                                [600, 1343, 14, 28.6, null],
+                                [700, 1315, 14, 28.5, 0.1],
+                                [800, 1286, 14, 28.3, 0.1],
+                                [900, 1257, 16, 28.1, 0.1],
+                                [1000, 1226, 16, 27.9, 0.2],
+                                [1100, 1193, 16, 27.6, 0.2],
+                                [1200, 1159, 18, 27.2, 0.2],
+                                [1300, 1123, 19, 26.8, 0.2],
+                                [1400, 1084, 22, 26.4, 0.3],
+                                [1500, 1040, 24, 25.8, 0.3],
+                                [1600, 991, 28, 25.1, 0.4],
+                                [1700, 932, 36, 24.2, 0.6],
+                                [1800, 851, 68, 22.8, 1.3]
+                            ],
+                            4: [
+                                [400, 1418, 10, 32.9, null],
+                                [500, 1398, 11, 32.9, 0.1],
+                                [600, 1376, 10, 32.8, 0.1],
+                                [700, 1355, 11, 32.7, 0.1],
+                                [800, 1333, 11, 32.6, 0.1],
+                                [900, 1311, 12, 32.4, 0.1],
+                                [1000, 1288, 12, 32.2, null],
+                                [1100, 1264, 12, 32.1, 0.1],
+                                [1200, 1240, 13, 31.8, 0.1],
+                                [1300, 1215, 13, 31.6, 0.1],
+                                [1400, 1189, 14, 31.3, 0.1],
+                                [1500, 1161, 14, 31, 0.1],
+                                [1600, 1133, 15, 30.7, 0.2],
+                                [1700, 1102, 16, 30.3, 0.2],
+                                [1800, 1069, 17, 29.8, 0.2],
+                                [1900, 1034, 19, 29.3, 0.3],
+                                [2000, 995, 22, 28.7, 0.4],
+                                [2100, 950, 26, 27.9, 0.5],
+                                [2200, 896, 34, 26.9, 0.7],
+                                [2300, 820, 65, 25.3, 1.4]
+                            ]
+                        }
+                    }
+                    // PLACEHOLDER: SMOKE and ILUM data not yet provided.
+                }
+            },
+            realistic: null
+        }
+    },
+
+    // Source: "2B14 VANILLA - M777.xlsx", sheets "M777 155M 1".."M777 155M 5".
+    // Note: in sheet "M777 155M 5" the dElev and dTOF columns appear swapped
+    // relative to rings 1-4 (column C holds 0.1-0.6 values and column E holds
+    // 7-20 values). They are stored here in the canonical
+    // [range, elevation, dElev, TOF, dTOF] order — i.e. with the swap applied.
+    // A handful of obvious spreadsheet typos are preserved verbatim per user
+    // instruction (e.g. ring 5 / 4900m elev = 641, ring 4 / 3500m TOF = 4.5,
+    // ring 2 / 1700m elev = 1241, ring 2 / 2000m TOF = 32.1).
+    M777: {
+        id: 'M777',
+        displayName: 'M777 (155mm Howitzer)',
+        milsPerCircle: 6400,  // NATO
+        variants: {
+            vanilla: {
+                shells: {
+                    HE: {
+                        rangeLimits: { min: 950, max: 5300 },
+                        allowsRingZero: false,
+                        dispersionByRing: { 1: 69, 3: 69, 5: 69 },
+                        rings: {
+                            1: [
+                                [950, 1245, 24, 24.4, 0.2],
+                                [1000, 1221, 24, 24.2, 0.2],
+                                [1050, 1197, 26, 24, 0.3],
+                                [1100, 1171, 27, 23.7, 0.3],
+                                [1150, 1144, 29, 23.4, 0.3],
+                                [1200, 1115, 31, 23.1, 0.4],
+                                [1250, 1084, 34, 22.7, 0.4],
+                                [1300, 1050, 39, 22.3, 0.5],
+                                [1350, 1011, 46, 21.8, 0.6],
+                                [1400, 965, 58, 21.2, 0.9],
+                                [1450, 907, 107, 20.3, 1.7],
+                                [1500, 800, null, 18.6, null]
+                            ],
+                            2: [
+                                [1500, 1270, 13, 33.1, 0.1],
+                                [1550, 1257, 14, 33, 0.1],
+                                [1600, 1243, 14, 32.9, 0.2],
+                                [1650, 1229, 15, 32.7, 0.2],
+                                [1700, 1241, 14, 32.5, 0.1],   // spreadsheet anomaly preserved
+                                [1750, 1200, 15, 32.4, 0.3],
+                                [1800, 1185, 16, 32.1, 0.2],
+                                [1850, 1169, 16, 31.9, 0.2],
+                                [1900, 1153, 17, 31.7, 0.2],
+                                [1950, 1136, 17, 31.5, 0.3],
+                                [2000, 1119, 18, 32.1, 0.2],   // spreadsheet anomaly preserved
+                                [2050, 1101, 19, 31, 0.3],
+                                [2100, 1082, 20, 30.7, 0.4],
+                                [2150, 1062, 21, 30.3, 0.3],
+                                [2200, 1041, 23, 30, 0.4],
+                                [2250, 1018, 23, 29.6, 0.4],
+                                [2300, 995, 28, 29.2, 0.5],
+                                [2350, 967, 29, 28.7, 0.6],
+                                [2400, 938, 34, 28.1, 0.6],
+                                [2450, 904, 44, 27.5, 1],
+                                [2500, 860, null, 26.5, null]
+                            ],
+                            3: [
+                                [2100, 1272, 10, 41, 0.1],
+                                [2200, 1253, 10, 40.8, 0.2],
+                                [2300, 1233, 10, 40.5, 0.2],
+                                [2400, 1213, 11, 40.2, 0.2],
+                                [2500, 1192, 11, 39.9, 0.2],
+                                [2600, 1170, 12, 39.5, 0.2],
+                                [2700, 1147, 12, 39.1, 0.2],
+                                [2800, 1123, 13, 38.7, 0.2],
+                                [2900, 1098, 14, 38.3, 0.3],
+                                [3000, 1070, 14, 37.7, 0.2],
+                                [3100, 1042, 16, 37.2, 0.4],
+                                [3200, 1010, 16, 36.5, 0.3],
+                                [3300, 975, 18, 35.7, 0.4],
+                                [3400, 936, 22, 34.9, 0.6],
+                                [3500, 890, 28, 33.7, 0.7],
+                                [3600, 828, null, 32.1, null]
+                            ],
+                            4: [
+                                [2600, 1271, 8, 47.2, 0.1],
+                                [2700, 1255, 7, 47, 0.2],
+                                [2800, 1240, 8, 46.7, 0.1],
+                                [2900, 1224, 9, 46.5, 0.2],
+                                [3000, 1207, 9, 46.2, 0.2],
+                                [3100, 1190, 9, 45.9, 0.2],
+                                [3200, 1172, 9, 45.6, 0.2],
+                                [3300, 1154, 9, 45.2, 0.2],
+                                [3400, 1135, 9, 44.9, 0.2],
+                                [3500, 1116, 10, 4.5, 0.2],    // spreadsheet anomaly preserved (TOF likely 44.5)
+                                [3600, 1095, 10, 44, 0.2],
+                                [3700, 1074, 11, 43.6, 0.3],
+                                [3800, 1052, 12, 43.1, 0.3],
+                                [3900, 1028, 12, 42.5, 0.3],
+                                [4000, 1003, 14, 41.9, 0.3],
+                                [4100, 976, 15, 41.3, 0.4],
+                                [4200, 946, 17, 40.5, 0.5],
+                                [4300, 912, 17, 39.6, 0.5],
+                                [4400, 874, 20, 38.5, 0.5],
+                                [4500, 828, 26, 37.2, 0.8]
+                            ],
+                            // Ring 5: spreadsheet columns C and E were swapped
+                            // (see header note above). Stored here with the
+                            // swap applied → dElev from spreadsheet col E.
+                            5: [
+                                [3000, 1271, 7, 52.2, 0.1],
+                                [3100, 1258, 7, 52, 0.1],
+                                [3200, 1244, 7, 51.8, 0.1],
+                                [3300, 1230, 7, 51.5, 0.1],
+                                [3400, 1216, 7, 51.3, 0.2],
+                                [3500, 1202, 7, 51, 0.1],
+                                [3600, 1187, 7, 50.7, 0.1],
+                                [3700, 1172, 8, 50.4, 0.1],
+                                [3800, 1156, 7, 50.1, 0.2],
+                                [3900, 1140, 8, 49.8, 0.2],
+                                [4000, 1124, 9, 49.4, 0.2],
+                                [4100, 1107, 9, 49, 0.2],
+                                [4200, 1089, 9, 48.6, 0.2],
+                                [4300, 1071, 9, 48.2, 0.2],
+                                [4400, 1052, 10, 47.7, 0.2],
+                                [4500, 1032, 10, 47.2, 0.2],
+                                [4600, 1011, 10, 46.7, 0.3],
+                                [4700, 989, 11, 46.1, 0.3],
+                                [4800, 966, 12, 45.5, 0.4],
+                                [4900, 641, 13, 44.7, 0.3],    // spreadsheet anomaly preserved (elev likely ~941)
+                                [5000, 913, 14, 44, 0.5],
+                                [5100, 883, 16, 43.1, 0.5],
+                                [5200, 850, 20, 42, 0.6],
+                                [5300, 809, null, 40.7, null]
+                            ]
+                        }
+                    }
+                }
+            },
+            realistic: null
+        }
+    },
+
     // PLACEHOLDER: Example of another platform. Fill in firing tables to
     // activate. The HTML platform dropdown already exposes M119 as an option;
     // until tables are provided, M119 calculations will return null and the
@@ -401,6 +644,7 @@ const PLATFORMS = {
     M119: {
         id: 'M119',
         displayName: 'M119 (105mm Howitzer)',
+        milsPerCircle: 6400,  // NATO
         variants: {
             vanilla: null,
             realistic: null
@@ -430,9 +674,14 @@ const Settings = {
 
     syncToggleButton() {
         const btn = document.getElementById('realistic-toggle');
-        if (!btn) return;
-        btn.classList.toggle('active', this.realistic);
-        btn.textContent = this.realistic ? 'Realistic Mode: ON' : 'Realistic Mode: OFF';
+        if (btn) {
+            btn.classList.toggle('active', this.realistic);
+            btn.textContent = this.realistic ? 'Mod: Adult Mortars (ON)' : 'Mod: Adult Mortars (OFF)';
+            btn.setAttribute('aria-pressed', String(this.realistic));
+        }
+        // Mirror to the Settings page checkbox (if it's currently in DOM).
+        const checkbox = document.getElementById('pref-adult-mortars');
+        if (checkbox) checkbox.checked = this.realistic;
     },
 
     /**
@@ -476,5 +725,35 @@ const Settings = {
         const shellData = this.resolveShell(missionType, shell);
         if (!shellData) return [];
         return Object.keys(shellData.rings).map(Number).sort((a, b) => a - b);
+    },
+
+    /** Shell type ids ('HE', 'SMOKE', ...) the active platform/variant actually defines. */
+    getAvailableShells(missionType) {
+        const platform = PLATFORMS[this.getActivePlatformId(missionType)];
+        if (!platform) return [];
+        const wanted = this.realistic ? 'realistic' : 'vanilla';
+        const variant = platform.variants[wanted] || platform.variants.vanilla;
+        if (!variant) return [];
+        return Object.keys(variant.shells);
+    },
+
+    /**
+     * Mils per full circle for the active platform. NATO = 6400, Soviet
+     * doctrine = 6000. Defaults to NATO when a platform omits the property.
+     */
+    getMilsPerCircle(missionType) {
+        const platform = PLATFORMS[this.getActivePlatformId(missionType)];
+        return (platform && platform.milsPerCircle) || 6400;
+    },
+
+    /**
+     * Per-ring dispersion (impact radius, metres) for the active shell, or
+     * null if the spreadsheet didn't include it for this ring.
+     */
+    getDispersion(missionType, shell, rings) {
+        const shellData = this.resolveShell(missionType, shell);
+        if (!shellData || !shellData.dispersionByRing) return null;
+        const v = shellData.dispersionByRing[rings];
+        return (typeof v === 'number') ? v : null;
     }
 };

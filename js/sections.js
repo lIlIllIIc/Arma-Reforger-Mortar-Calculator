@@ -47,7 +47,10 @@ function updateSectionConfiguration() {
 
     updateMortarCoordinates();
     updateSectionSelections();
-    saveGlobalData();
+    // Silent autosave — saveGlobalData() shows a success modal and is reserved
+    // for the explicit "Save" button on the Edit Global Data page. This path
+    // runs on every page load (bootstrap + loadAllData), so it must not pop UI.
+    saveAllData();
 }
 
 /** Re-render the per-mission "which sections to fire" checkboxes. */
@@ -72,11 +75,24 @@ function updateSectionSelections() {
     missionTypes.forEach(updateMissionShellConfiguration);
 }
 
-/** Build the shell/rings dropdowns for one mission page. */
+/**
+ * Build the shell/rings dropdowns for one mission page. The shell list is
+ * sourced from the active platform via Settings, so platforms with fewer
+ * shell types (e.g. 2B14 with HE only) don't show options that would error.
+ *
+ * Falls back to the canonical HE/SMOKE/ILUM/PRACTICE set when the platform
+ * has no data yet (M119 placeholder) — that way the UI never collapses to
+ * an empty select.
+ */
+const DEFAULT_SHELL_FALLBACK = ['HE', 'SMOKE', 'ILUM', 'PRACTICE'];
+
 function updateMissionShellConfiguration(missionType) {
     const numSections = parseInt(document.getElementById('num-sections').value);
     const container = document.getElementById(`shell-config-${missionType}`);
     if (!container) return;
+
+    const available = Settings.getAvailableShells(missionType);
+    const shellOptions = available.length ? available : DEFAULT_SHELL_FALLBACK;
 
     container.innerHTML = '';
 
@@ -86,10 +102,7 @@ function updateMissionShellConfiguration(missionType) {
         shellRow.innerHTML = `
             <label>Section ${i} Shell Type:</label>
             <select id="section-${i}-shell-${missionType}" onchange="updateSectionRingsOptions(${i}, '${missionType}')">
-                <option value="HE">HE</option>
-                <option value="SMOKE">SMOKE</option>
-                <option value="ILUM">ILUM</option>
-                <option value="PRACTICE">PRACTICE</option>
+                ${shellOptions.map(s => `<option value="${s}">${s}</option>`).join('')}
             </select>
         `;
         container.appendChild(shellRow);
@@ -111,6 +124,18 @@ function updateMissionShellConfiguration(missionType) {
         // Defer initial ring update so mortar coordinates have time to load.
         setTimeout(() => updateSectionRingsOptions(i, missionType), 50);
     }
+}
+
+/**
+ * Rebuild every mission's shell/rings dropdowns + ring auto-selection. Call
+ * after the active platform changes or the realistic-mode toggle flips, since
+ * either can change the set of available shells.
+ */
+function refreshAllShellConfigurations() {
+    ['grid', 'polar', 'shift'].forEach(mt => {
+        updateMissionShellConfiguration(mt);
+        triggerRingUpdatesForCalculation(mt);
+    });
 }
 
 /** "All sections" master checkbox handler — keeps the per-section boxes sane. */
@@ -411,15 +436,31 @@ function updateSectionRingsOptions(sectionNumber, missionType) {
 
     const targetCoords = calculateFinalTargetCoordinates(missionType);
     const mortarCoords = pickBaseGunForSection(sectionNumber);
+    const crestElev = getCrestValue(missionType);
+    const sectionAlt = getSectionAltitude(sectionNumber);
 
     let autoRing = null;
     let rangeCheck = null;
+    let crestWarning = null;
 
     if (targetCoords && mortarCoords && mortarCoords.x && mortarCoords.y) {
         const range = calculateRange(mortarCoords.x, mortarCoords.y, targetCoords.x, targetCoords.y);
         rangeCheck = checkTargetRange(range, shell, missionType);
         if (rangeCheck.inRange) {
-            autoRing = getMinimumRingsForRange(range, shell, missionType);
+            autoRing = getMinimumRingsForRange(range, shell, missionType, crestElev, sectionAlt);
+
+            // If the user has a manual ring selection that doesn't clear the
+            // crest, surface a warning (no auto-override of their pick).
+            if (crestElev !== null && previousValue !== null && previousValue !== undefined) {
+                const userRing = parseInt(previousValue, 10);
+                const userTable = Settings.getShellTable(missionType, shell, userRing);
+                if (userTable
+                    && range >= userTable[0][0]
+                    && range <= userTable[userTable.length - 1][0]
+                    && !trajectoryClearsCrest(userTable, range, sectionAlt, crestElev)) {
+                    crestWarning = `Ring ${userRing} may not clear ${crestElev}m crest`;
+                }
+            }
         }
     }
 
@@ -440,9 +481,23 @@ function updateSectionRingsOptions(sectionNumber, missionType) {
         ringsSelect.value = previousValue;
     }
 
+    // Quiet visual hint: amber border + small message under the rings select.
+    // Range failure takes precedence over crest failure.
     if (rangeCheck && !rangeCheck.inRange) {
-        showAlertModal('Range Error', rangeCheck.reason);
+        setFieldWarning(ringsSelect.id, rangeCheck.reason);
+    } else if (crestWarning) {
+        setFieldWarning(ringsSelect.id, crestWarning);
+    } else {
+        clearFieldWarning(ringsSelect.id);
     }
+}
+
+/** Read the crest-clearance input for the given mission, or null if blank/invalid. */
+function getCrestValue(missionType) {
+    const el = document.getElementById(`crest-${missionType}`);
+    if (!el) return null;
+    const v = parseFloat(el.value);
+    return isFinite(v) ? v : null;
 }
 
 /**
