@@ -72,8 +72,15 @@ const MISSION_FIELDS = {
     ]
 };
 
+// Global (cross-mission) inputs that need autosaving alongside per-mission fields.
+const GLOBAL_FIELDS = ['global-wind-speed', 'global-wind-from-deg'];
+
 function getAllPersistedFieldIds() {
-    return ['num-sections', ...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift];
+    return [
+        'num-sections',
+        ...GLOBAL_FIELDS,
+        ...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift
+    ];
 }
 
 // ============================================================================
@@ -117,8 +124,8 @@ function saveAllData() {
 
     localStorage.setItem('numGuns', getTotalGuns());
 
-    // Mission input fields (grid + polar)
-    [...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift].forEach(id => {
+    // Mission input fields (grid + polar + shift) and global (wind, etc.)
+    [...GLOBAL_FIELDS, ...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift].forEach(id => {
         const el = document.getElementById(id);
         if (el) localStorage.setItem(id, el.value);
     });
@@ -206,8 +213,8 @@ function loadAllData() {
         }
     }
 
-    // Mission field values
-    [...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift].forEach(id => {
+    // Mission + global field values
+    [...GLOBAL_FIELDS, ...MISSION_FIELDS.grid, ...MISSION_FIELDS.polar, ...MISSION_FIELDS.shift].forEach(id => {
         const value = localStorage.getItem(id);
         const el = document.getElementById(id);
         if (value !== null && el) el.value = value;

@@ -39,6 +39,16 @@ function interpolate(x, x0, y0, x1, y1) {
     return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 }
 
+/**
+ * Like interpolate(), but returns null if either endpoint is null/undefined.
+ * Used for optional table columns (peakAlt, angleOfImpact, wind corrections)
+ * that older firing-table rows might not include.
+ */
+function safeInterpolate(x, x0, y0, x1, y1) {
+    if (y0 == null || y1 == null) return null;
+    return interpolate(x, x0, y0, x1, y1);
+}
+
 /** Find the table rows bracketing `range` for piecewise linear interpolation. */
 function bracketRange(table, range) {
     for (let i = 0; i < table.length - 1; i++) {
@@ -48,6 +58,24 @@ function bracketRange(table, range) {
     }
     return { lower: table[0], upper: table[table.length - 1] };
 }
+
+/**
+ * Firing-table row layout (column indices). Indices 0–4 are required; 5–8 are
+ * optional and only present on platforms that publish them (currently M252
+ * and 2B14 vanilla). When absent, safeInterpolate returns null and the wind/
+ * peak-alt/angle-of-impact features quietly degrade for that platform.
+ */
+const TABLE_COL = {
+    RANGE: 0,
+    ELEV: 1,
+    DELEV_PER_100M: 2,
+    TOF: 3,
+    DTOF_PER_100M: 4,
+    PEAK_ALT: 5,           // metres above sea level
+    ANGLE_OF_IMPACT: 6,    // degrees from horizontal
+    WIND_CROSS_MILS: 7,    // azimuth correction (mils) per 10 m/s crosswind
+    WIND_LONG_M: 8         // range correction (m) per 10 m/s longitudinal wind
+};
 
 /** Straight-line range in metres (game coords are 1 unit = 10m). */
 function calculateRange(mortarX, mortarY, targetX, targetY) {
@@ -142,12 +170,14 @@ function checkTargetRange(range, shell, missionType = 'grid') {
 /**
  * Computes the firing solution for one mortar/target pair.
  *
- * @param missionType  'grid' | 'polar' | 'shift' - selects which platform
- *                     dropdown drives the table lookup.
+ * @param missionType  'grid' | 'polar' | 'shift' — drives platform lookup.
  * @returns null when the firing table is unavailable, otherwise:
- *          { azimuth, elevation, tof,
- *            azimuthCorr, elevationCorr, tofCorr }
- *          where the *Corr fields fold in ADD/DROP + LEFT/RIGHT shifts.
+ *   {
+ *     azimuth, elevation, tof,                       // base solution
+ *     azimuthCorr, elevationCorr, tofCorr,           // ADD/DROP + L/R + wind
+ *     peakAlt, angleOfImpact,                        // null on legacy tables
+ *     windAdjMils, windAdjRangeM                     // 0 when no wind data
+ *   }
  */
 function calculateSingleGunBallistics(
     mortarX, mortarY, targetX, targetY,
@@ -159,41 +189,81 @@ function calculateSingleGunBallistics(
     const table = Settings.getShellTable(missionType, shell, rings);
     if (!table) return null;
 
-    // Active platform's mil convention — feeds the azimuth scaling so a
-    // Russian 2B14 returns 0..6000 mils while NATO weapons return 0..6400.
+    // Active platform's mil convention — NATO 6400 vs Russian 6000.
     const milsPerCircle = Settings.getMilsPerCircle(missionType);
     const heightDiff = targetAlt - mortarAlt;
 
-    // --- Base solution ---
+    // --- Base solution (target as-is) ---
     const azimuth = calculateAzimuth(mortarX, mortarY, targetX, targetY, milsPerCircle);
     const range = calculateRange(mortarX, mortarY, targetX, targetY);
+    const base = solveFromTable(table, range, heightDiff);
 
-    const { elevation, tof } = solveFromTable(table, range, heightDiff);
-
-    // --- Corrected solution ---
+    // --- Shift-corrected solution (ADD/DROP + LEFT/RIGHT) ---
     const corr = applyShiftCorrection(targetX, targetY, addDrop, leftRight, foDirDeg);
     const azimuthCorr = calculateAzimuth(mortarX, mortarY, corr.x, corr.y, milsPerCircle);
     const rangeCorr = calculateRange(mortarX, mortarY, corr.x, corr.y);
-    const solved = solveFromTable(table, rangeCorr, heightDiff);
+    const shifted = solveFromTable(table, rangeCorr, heightDiff);
+
+    // --- Wind correction (on top of shifted) ---
+    // Only applied when the table provides windCrossMils/windLongM AND the
+    // user has entered a non-zero wind speed in global data. Falls through
+    // gracefully for legacy tables or zero wind.
+    const wind = Settings.getWind ? Settings.getWind() : { speed: 0, fromDeg: 0 };
+    let windAdjMils = 0;
+    let windAdjRangeM = 0;
+    let finalAzimuth = azimuthCorr;
+    let finalElevation = shifted.elevation;
+    let finalTof = shifted.tof;
+
+    if (wind.speed > 0
+        && shifted.windCrossMils != null
+        && shifted.windLongM != null
+        && isFinite(shifted.windCrossMils)
+        && isFinite(shifted.windLongM)) {
+
+        // Convert firing azimuth to compass degrees regardless of mil convention.
+        const fireBearingDeg = azimuthCorr / milsPerCircle * 360;
+        const deltaRad = (wind.fromDeg - fireBearingDeg) * Math.PI / 180;
+        const crosswindFromRight = wind.speed * Math.sin(deltaRad);  // +ve = wind from right of gun
+        const headwind = wind.speed * Math.cos(deltaRad);            // +ve = headwind, -ve = tailwind
+
+        // Azimuth: wind from right pushes round left → aim right (+ mils).
+        windAdjMils = crosswindFromRight * shifted.windCrossMils / 10;
+        // Range: headwind shortens flight → aim further (+ m). Tailwind shortens aim.
+        windAdjRangeM = headwind * shifted.windLongM / 10;
+
+        finalAzimuth = ((azimuthCorr + windAdjMils) % milsPerCircle + milsPerCircle) % milsPerCircle;
+        const reSolved = solveFromTable(table, rangeCorr + windAdjRangeM, heightDiff);
+        finalElevation = reSolved.elevation;
+        finalTof = reSolved.tof;
+    }
 
     return {
         azimuth: azimuth,
-        elevation: elevation,
-        tof: tof,
-        azimuthCorr: azimuthCorr,
-        elevationCorr: solved.elevation,
-        tofCorr: solved.tof
+        elevation: base.elevation,
+        tof: base.tof,
+        azimuthCorr: finalAzimuth,
+        elevationCorr: finalElevation,
+        tofCorr: finalTof,
+        peakAlt: shifted.peakAlt,
+        angleOfImpact: shifted.angleOfImpact,
+        windAdjMils: windAdjMils,
+        windAdjRangeM: windAdjRangeM
     };
 }
 
-/** Interpolate elevation/TOF for a range and apply altitude correction. */
+/**
+ * Interpolate the table for a range and apply altitude correction.
+ * Returns elevation, tof, plus optional peakAlt / angleOfImpact /
+ * windCrossMils / windLongM (null when the row doesn't include them).
+ */
 function solveFromTable(table, range, heightDiff) {
     const { lower, upper } = bracketRange(table, range);
 
-    const elev = interpolate(range, lower[0], lower[1], upper[0], upper[1]);
-    const dElev = interpolate(range, lower[0], lower[2], upper[0], upper[2]);
-    const tof = interpolate(range, lower[0], lower[3], upper[0], upper[3]);
-    const dTof = interpolate(range, lower[0], lower[4], upper[0], upper[4]);
+    const elev = interpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.ELEV], upper[TABLE_COL.RANGE], upper[TABLE_COL.ELEV]);
+    const dElev = interpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.DELEV_PER_100M], upper[TABLE_COL.RANGE], upper[TABLE_COL.DELEV_PER_100M]);
+    const tof = interpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.TOF], upper[TABLE_COL.RANGE], upper[TABLE_COL.TOF]);
+    const dTof = interpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.DTOF_PER_100M], upper[TABLE_COL.RANGE], upper[TABLE_COL.DTOF_PER_100M]);
 
     // Altitude correction: positive height diff (target above mortar) reduces
     // elevation by dElev * (heightDiff/100); negative does the opposite.
@@ -210,7 +280,14 @@ function solveFromTable(table, range, heightDiff) {
         correctedTof = tof + (dTof * Math.abs(heightDiff) / 100);
     }
 
-    return { elevation: elevation, tof: correctedTof };
+    return {
+        elevation: elevation,
+        tof: correctedTof,
+        peakAlt: safeInterpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.PEAK_ALT], upper[TABLE_COL.RANGE], upper[TABLE_COL.PEAK_ALT]),
+        angleOfImpact: safeInterpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.ANGLE_OF_IMPACT], upper[TABLE_COL.RANGE], upper[TABLE_COL.ANGLE_OF_IMPACT]),
+        windCrossMils: safeInterpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.WIND_CROSS_MILS], upper[TABLE_COL.RANGE], upper[TABLE_COL.WIND_CROSS_MILS]),
+        windLongM: safeInterpolate(range, lower[TABLE_COL.RANGE], lower[TABLE_COL.WIND_LONG_M], upper[TABLE_COL.RANGE], upper[TABLE_COL.WIND_LONG_M])
+    };
 }
 
 // ============================================================================

@@ -63,6 +63,9 @@ const MISSION_OUTPUTS = {
         baseResults: 'base-results-grid',
         correctedResults: 'corrected-results-grid',
         sectionSolutions: 'section-solutions-grid',
+        trajectoryInfo: 'trajectory-info-grid',
+        peakAlt: 'peak-alt-grid', angleOfImpact: 'angle-impact-grid',
+        windCorrRow: 'wind-corr-row-grid', windCorr: 'wind-corr-grid',
         gunSolutions: 'fire-solution-guns-grid',
         gunSolutionsContent: 'gun-solutions-content-grid'
     },
@@ -73,6 +76,9 @@ const MISSION_OUTPUTS = {
         baseResults: 'base-results-polar',
         correctedResults: 'corrected-results-polar',
         sectionSolutions: 'section-solutions-polar',
+        trajectoryInfo: 'trajectory-info-polar',
+        peakAlt: 'peak-alt-polar', angleOfImpact: 'angle-impact-polar',
+        windCorrRow: 'wind-corr-row-polar', windCorr: 'wind-corr-polar',
         gunSolutions: 'fire-solution-guns-polar',
         gunSolutionsContent: 'gun-solutions-content-polar'
     },
@@ -83,6 +89,9 @@ const MISSION_OUTPUTS = {
         baseResults: 'base-results-shift',
         correctedResults: 'corrected-results-shift',
         sectionSolutions: 'section-solutions-shift',
+        trajectoryInfo: 'trajectory-info-shift',
+        peakAlt: 'peak-alt-shift', angleOfImpact: 'angle-impact-shift',
+        windCorrRow: 'wind-corr-row-shift', windCorr: 'wind-corr-shift',
         gunSolutions: 'fire-solution-guns-shift',
         gunSolutionsContent: 'gun-solutions-content-shift'
     }
@@ -449,6 +458,10 @@ function renderMissionSolutions(missionType, sectionSolutions, totalGuns) {
     } else {
         if (baseBox) baseBox.style.display = 'none';
         if (corrBox) corrBox.style.display = 'none';
+        // Trajectory-info is the single-gun companion box — hide when per-gun
+        // panel is in play.
+        const trajBox = document.getElementById(outputs.trajectoryInfo);
+        if (trajBox) trajBox.style.display = 'none';
     }
 }
 
@@ -521,6 +534,31 @@ function displayBaseResults(missionType, range, sol) {
     document.getElementById(o.tofCorr).textContent = sol.tofCorr.toFixed(1);
     document.getElementById(o.baseResults).style.display = 'block';
     document.getElementById(o.correctedResults).style.display = 'block';
+
+    // Trajectory-info panel: peak altitude + angle of impact + (when present)
+    // a wind-correction breakdown line. Only shown when the active platform's
+    // firing table actually provides these fields.
+    const trajBox = document.getElementById(o.trajectoryInfo);
+    if (trajBox) {
+        const hasExtras = sol.peakAlt != null || sol.angleOfImpact != null
+                       || sol.windAdjMils !== 0 || sol.windAdjRangeM !== 0;
+        if (hasExtras) {
+            document.getElementById(o.peakAlt).textContent = (sol.peakAlt != null) ? Math.round(sol.peakAlt) : '—';
+            document.getElementById(o.angleOfImpact).textContent = (sol.angleOfImpact != null) ? sol.angleOfImpact.toFixed(1) : '—';
+            const windRow = document.getElementById(o.windCorrRow);
+            if (sol.windAdjMils || sol.windAdjRangeM) {
+                document.getElementById(o.windCorr).textContent =
+                    `${sol.windAdjMils >= 0 ? '+' : ''}${Math.round(sol.windAdjMils)} mils az · ${sol.windAdjRangeM >= 0 ? '+' : ''}${Math.round(sol.windAdjRangeM)} m range`;
+                windRow.style.display = '';
+            } else if (windRow) {
+                windRow.style.display = 'none';
+            }
+            trajBox.style.display = 'block';
+        } else {
+            trajBox.style.display = 'none';
+        }
+    }
+
     // Re-show in case a previous multi-section run hid them.
     const sectionContainer = document.getElementById(o.sectionSolutions);
     if (sectionContainer) {
@@ -759,6 +797,17 @@ function displayGunSolutions(solutions, containerId) {
             if (sol.fireDelay !== undefined) {
                 output += `    TOT delay: +${sol.fireDelay.toFixed(1)} sec\n`;
             }
+            if (sol.peakAlt != null) {
+                output += `    Peak Alt: ${Math.round(sol.peakAlt)} m\n`;
+            }
+            if (sol.angleOfImpact != null) {
+                output += `    Angle of Impact: ${sol.angleOfImpact.toFixed(1)}°\n`;
+            }
+            if (sol.windAdjMils || sol.windAdjRangeM) {
+                const az = sol.windAdjMils >= 0 ? `+${Math.round(sol.windAdjMils)}` : `${Math.round(sol.windAdjMils)}`;
+                const rng = sol.windAdjRangeM >= 0 ? `+${Math.round(sol.windAdjRangeM)}` : `${Math.round(sol.windAdjRangeM)}`;
+                output += `    Wind: ${az} mils az, ${rng} m range\n`;
+            }
             if (sol.targetX !== undefined && sol.targetY !== undefined) {
                 output += `    Target: (${formatCoordPair(sol.targetX, sol.targetY)})\n`;
             }
@@ -959,6 +1008,10 @@ function getMissionData(missionType) {
             if (sol.targetX !== undefined) gun.targetX = sol.targetX;
             if (sol.targetY !== undefined) gun.targetY = sol.targetY;
             if (sol.fireDelay !== undefined) gun.fireDelay = sol.fireDelay;
+            if (sol.peakAlt != null) gun.peakAlt = sol.peakAlt;
+            if (sol.angleOfImpact != null) gun.angleOfImpact = sol.angleOfImpact;
+            if (sol.windAdjMils) gun.windAdjMils = sol.windAdjMils;
+            if (sol.windAdjRangeM) gun.windAdjRangeM = sol.windAdjRangeM;
             md.sectionSolutions[sec].guns.push(gun);
         });
     }
@@ -992,9 +1045,9 @@ const RESET_INPUT_FIELDS = {
 };
 
 const ALL_RESULT_PANELS = [
-    'base-results-grid', 'corrected-results-grid', 'section-solutions-grid', 'mini-map-grid', 'gun-solutions-content-grid',
-    'base-results-polar', 'corrected-results-polar', 'section-solutions-polar', 'mini-map-polar', 'gun-solutions-content-polar',
-    'base-results-shift', 'corrected-results-shift', 'section-solutions-shift', 'mini-map-shift', 'gun-solutions-content-shift'
+    'base-results-grid', 'corrected-results-grid', 'section-solutions-grid', 'trajectory-info-grid', 'mini-map-grid', 'gun-solutions-content-grid',
+    'base-results-polar', 'corrected-results-polar', 'section-solutions-polar', 'trajectory-info-polar', 'mini-map-polar', 'gun-solutions-content-polar',
+    'base-results-shift', 'corrected-results-shift', 'section-solutions-shift', 'trajectory-info-shift', 'mini-map-shift', 'gun-solutions-content-shift'
 ];
 
 function resetMissionFields(missionType) {

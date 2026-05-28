@@ -175,6 +175,21 @@
             </div>
         </div>
 
+        <div class="section">
+            <div class="section-header">Wind (Global, single layer)</div>
+            <div class="input-group">
+                <div class="input-row">
+                    <label>Wind speed (m/s):</label>
+                    <input type="number" id="global-wind-speed" min="0" step="0.1" placeholder="e.g. 5" />
+                </div>
+                <div class="input-row">
+                    <label>Wind direction FROM (degrees, 0–359):</label>
+                    <input type="number" id="global-wind-from-deg" min="0" max="359" step="1" placeholder="0 = from north" />
+                </div>
+                <p class="settings-hint">Wind correction is applied automatically when the firing table includes wind data (M252 and 2B14 vanilla). Convention: direction is the bearing the wind is BLOWING FROM (meteorological standard).</p>
+            </div>
+        </div>
+
         <div class="nav-buttons">
             <button onclick="saveGlobalData()">Save</button>
         </div>
@@ -429,6 +444,17 @@
              and the single Base/Corrected boxes above are used instead. -->
         <div class="section-solutions" id="section-solutions-grid" style="display:none;"></div>
 
+        <!-- Peak altitude, angle of impact, wind correction — single-gun case. -->
+        <div class="results trajectory-info" id="trajectory-info-grid" style="display:none;">
+            <h3>Trajectory Info</h3>
+            <div class="result-item"><span class="result-label">Peak Alt:</span> <span class="result-value" id="peak-alt-grid">-</span> m</div>
+            <div class="result-item"><span class="result-label">Angle of Impact:</span> <span class="result-value" id="angle-impact-grid">-</span> °</div>
+            <div class="result-item wind-corr-row" id="wind-corr-row-grid" style="display:none;">
+                <span class="result-label">Wind Correction:</span>
+                <span class="result-value" id="wind-corr-grid">-</span>
+            </div>
+        </div>
+
         <div class="gun-solutions" id="fire-solution-guns-grid" style="display:none;">
             <h3>Fire Solution per Section per Gun</h3>
             <div id="gun-solutions-content-grid"></div>
@@ -667,6 +693,16 @@
         </div>
 
         <div class="section-solutions" id="section-solutions-polar" style="display:none;"></div>
+
+        <div class="results trajectory-info" id="trajectory-info-polar" style="display:none;">
+            <h3>Trajectory Info</h3>
+            <div class="result-item"><span class="result-label">Peak Alt:</span> <span class="result-value" id="peak-alt-polar">-</span> m</div>
+            <div class="result-item"><span class="result-label">Angle of Impact:</span> <span class="result-value" id="angle-impact-polar">-</span> °</div>
+            <div class="result-item wind-corr-row" id="wind-corr-row-polar" style="display:none;">
+                <span class="result-label">Wind Correction:</span>
+                <span class="result-value" id="wind-corr-polar">-</span>
+            </div>
+        </div>
 
         <div class="gun-solutions" id="fire-solution-guns-polar" style="display:none;">
             <h3>Fire Solution per Gun</h3>
@@ -911,6 +947,16 @@
         </div>
 
         <div class="section-solutions" id="section-solutions-shift" style="display:none;"></div>
+
+        <div class="results trajectory-info" id="trajectory-info-shift" style="display:none;">
+            <h3>Trajectory Info</h3>
+            <div class="result-item"><span class="result-label">Peak Alt:</span> <span class="result-value" id="peak-alt-shift">-</span> m</div>
+            <div class="result-item"><span class="result-label">Angle of Impact:</span> <span class="result-value" id="angle-impact-shift">-</span> °</div>
+            <div class="result-item wind-corr-row" id="wind-corr-row-shift" style="display:none;">
+                <span class="result-label">Wind Correction:</span>
+                <span class="result-value" id="wind-corr-shift">-</span>
+            </div>
+        </div>
 
         <div class="gun-solutions" id="fire-solution-guns-shift" style="display:none;">
             <h3>Fire Solution per Gun</h3>
