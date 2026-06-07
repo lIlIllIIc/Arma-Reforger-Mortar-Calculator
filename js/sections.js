@@ -91,6 +91,10 @@ function updateMissionShellConfiguration(missionType) {
     const container = document.getElementById(`shell-config-${missionType}`);
     if (!container) return;
 
+    // Show/hide the trajectory-arc selector based on the active platform.
+    // Howitzers expose `supportsArcs: true` in platforms.js; mortars don't.
+    syncArcSelectorVisibility(missionType);
+
     const available = Settings.getAvailableShells(missionType);
     const shellOptions = available.length ? available : DEFAULT_SHELL_FALLBACK;
 
@@ -136,6 +140,31 @@ function refreshAllShellConfigurations() {
         updateMissionShellConfiguration(mt);
         triggerRingUpdatesForCalculation(mt);
     });
+}
+
+/**
+ * Show or hide the Trajectory Arc dropdown for one mission page based on
+ * whether the active platform supports multiple arcs (howitzer = yes,
+ * mortar = no). Wired into updateMissionShellConfiguration so a platform
+ * change auto-reveals or hides the row.
+ */
+function syncArcSelectorVisibility(missionType) {
+    const row = document.getElementById(`arc-row-${missionType}`);
+    if (!row) return;
+    const supports = Settings.platformSupportsArcs(missionType);
+    row.style.display = supports ? '' : 'none';
+}
+
+/**
+ * onchange handler for the Trajectory Arc select. Different arcs have
+ * different range limits, so we need to re-pick the ring (in case the
+ * current ring no longer covers the target range) and re-run the live
+ * solver if auto-recalc is on.
+ */
+function onArcChange(missionType) {
+    triggerRingUpdatesForCalculation(missionType);
+    saveAllData();
+    if (typeof maybeLiveRecalc === 'function') maybeLiveRecalc(missionType);
 }
 
 /** "All sections" master checkbox handler — keeps the per-section boxes sane. */

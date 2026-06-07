@@ -666,6 +666,7 @@ const TEMPLATE_KEY_PATTERNS = [
     /^section-\d+-alt$/,
     /^section-\d+-gun-\d+-[xy]$/,
     /^platform(-polar|-shift)?$/,
+    /^arc(-polar|-shift)?$/,
     /^section-\d+-(shell|rings)-(grid|polar|shift)$/,
     /^global-wind-(speed|from-deg)$/
 ];

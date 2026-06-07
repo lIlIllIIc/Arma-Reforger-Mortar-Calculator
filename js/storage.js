@@ -48,21 +48,21 @@ function ensureSchemaUpToDate() {
 // Per-mission input field IDs. Used by both save and load.
 const MISSION_FIELDS = {
     grid: [
-        'platform', 'sheaf-type-grid',
+        'platform', 'arc', 'sheaf-type-grid',
         'target-x', 'target-y', 'target-alt', 'fo-dir',
         'sheaf-length', 'sheaf-direction', 'sheaf-diameter',
         'add-drop', 'left-right', 'target-number-grid', 'amount-rounds-grid',
         'crest-grid'
     ],
     polar: [
-        'platform-polar', 'sheaf-type-polar',
+        'platform-polar', 'arc-polar', 'sheaf-type-polar',
         'fo-x-polar', 'fo-y-polar', 'fo-dist-polar', 'fo-dir-polar', 'target-alt-polar',
         'sheaf-length-polar', 'sheaf-direction-polar', 'sheaf-diameter-polar',
         'add-drop-polar', 'left-right-polar', 'target-number-polar', 'amount-rounds-polar',
         'crest-polar'
     ],
     shift: [
-        'platform-shift', 'sheaf-type-shift',
+        'platform-shift', 'arc-shift', 'sheaf-type-shift',
         'target-alt-shift', 'fo-dir-shift',
         'sheaf-length-shift', 'sheaf-direction-shift', 'sheaf-diameter-shift',
         'add-drop-shift', 'left-right-shift',

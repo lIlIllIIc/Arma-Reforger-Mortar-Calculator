@@ -916,6 +916,8 @@ function getMissionData(missionType) {
         id: Date.now(),
         timestamp: new Date().toISOString(),
         missionType: missionType,
+        platform: Settings.getActivePlatformId(missionType),
+        arc: Settings.platformSupportsArcs(missionType) ? Settings.getArc(missionType) : null,
         numGuns: totalGuns,
         targetNumber: document.getElementById(inputs.targetNumber).value,
         amountRounds: parseInt(document.getElementById(inputs.amountRounds).value),
